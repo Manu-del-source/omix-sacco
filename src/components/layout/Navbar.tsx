@@ -18,9 +18,9 @@ export function Navbar() {
   }, [])
 
   const navLinks = [
-    { name: 'Features', href: '#features' },
-    { name: 'Pricing', href: '#pricing' },
-    { name: 'About', href: '#about' },
+    { name: 'Features', href: '/features' },
+    { name: 'Pricing', href: '/pricing' },
+    { name: 'About', href: '/about' },
   ]
 
   return (
@@ -61,7 +61,7 @@ export function Navbar() {
               href="/signup" 
               className="bg-omix-accent hover:bg-omix-accent-dark text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-lg hover:shadow-omix-accent/20"
             >
-              Get Started
+              Sign Up
             </Link>
           </div>
 
@@ -108,7 +108,7 @@ export function Navbar() {
                   className="w-full text-center py-3 rounded-xl bg-omix-accent text-white font-medium"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  Get Started
+                  Sign Up
                 </Link>
               </div>
             </div>

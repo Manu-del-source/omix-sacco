@@ -317,11 +317,14 @@ export function LandingPage() {
                   <span className="text-4xl font-display font-bold text-white">{plan.price}</span>
                   <span className="text-slate-500">{plan.period}</span>
                 </div>
-                <button className={`w-full py-3 rounded-xl font-medium transition-colors mb-8 ${
-                  plan.highlight ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-white/10 hover:bg-white/20 text-white'
-                }`}>
+                <Link 
+                  href={plan.name === 'Enterprise' ? '/contact' : '/signup'}
+                  className={`w-full py-3 rounded-xl font-medium transition-colors mb-8 flex items-center justify-center ${
+                    plan.highlight ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-white/10 hover:bg-white/20 text-white'
+                  }`}
+                >
                   {plan.button}
-                </button>
+                </Link>
                 <div className="space-y-4">
                   {plan.features.map((feat, i) => (
                     <div key={i} className="flex items-start gap-3">
@@ -398,6 +401,64 @@ export function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="bg-black/60 border-t border-white/5 pt-20 pb-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 mb-16">
+            <div className="col-span-2 lg:col-span-2">
+              <Link href="/" className="flex items-center gap-2 group mb-6">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-omix-accent to-amber-500 flex items-center justify-center">
+                  <Landmark className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xl font-display font-bold text-white tracking-tight">Omix <span className="text-omix-accent">SACCO</span></span>
+              </Link>
+              <p className="text-slate-400 text-sm max-w-xs leading-relaxed mb-6">
+                The intelligent digital backbone for modern financial cooperatives. Empowering members and scaling operations globally.
+              </p>
+              <div className="flex gap-4">
+                {/* Social placeholders */}
+                <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors cursor-pointer">
+                  <Users className="w-4 h-4" />
+                </div>
+                <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors cursor-pointer">
+                  <Phone className="w-4 h-4" />
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="text-white font-bold mb-6">Platform</h4>
+              <ul className="space-y-4">
+                <li><Link href="/features" className="text-slate-400 hover:text-omix-accent transition-colors text-sm">Features</Link></li>
+                <li><Link href="/pricing" className="text-slate-400 hover:text-omix-accent transition-colors text-sm">Pricing</Link></li>
+                <li><Link href="/login" className="text-slate-400 hover:text-omix-accent transition-colors text-sm">Live Demo</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-white font-bold mb-6">Company</h4>
+              <ul className="space-y-4">
+                <li><Link href="/about" className="text-slate-400 hover:text-omix-accent transition-colors text-sm">About Us</Link></li>
+                <li><Link href="/contact" className="text-slate-400 hover:text-omix-accent transition-colors text-sm">Contact</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-white font-bold mb-6">Legal</h4>
+              <ul className="space-y-4">
+                <li><Link href="#" className="text-slate-400 hover:text-omix-accent transition-colors text-sm">Privacy Policy</Link></li>
+                <li><Link href="#" className="text-slate-400 hover:text-omix-accent transition-colors text-sm">Terms of Service</Link></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-slate-500 text-xs">© 2026 Omix SACCO Solutions. All rights reserved.</p>
+            <p className="text-slate-500 text-xs flex items-center gap-2">Built with <span className="text-red-500">❤️</span> for Cooperatives</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
