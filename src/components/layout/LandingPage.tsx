@@ -188,7 +188,7 @@ export function LandingPage() {
       </section>
 
       {/* Features Summary */}
-      <section className="py-32 relative">
+      <section id="features" className="py-32 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-display font-bold mb-6">Everything you need to scale</h2>
@@ -268,7 +268,7 @@ export function LandingPage() {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-24 relative bg-black/20 border-y border-white/5">
+      <section id="pricing" className="py-24 relative bg-black/20 border-y border-white/5">
         <div className="absolute top-0 right-0 w-96 h-96 bg-omix-accent/5 blur-[120px] pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16">
