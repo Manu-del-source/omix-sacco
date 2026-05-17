@@ -2,20 +2,47 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Landmark, Menu, X, LogIn } from 'lucide-react'
+import { Landmark, Menu, X, LogIn, LogOut, User } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { createClient } from '@/utils/supabase/client'
+import { useRouter } from 'next/navigation'
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
+  const router = useRouter()
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20)
     }
     window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+      setLoading(false)
+    }
+    checkUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      subscription.unsubscribe()
+    }
+  }, [supabase.auth])
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/')
+    router.refresh()
+  }
 
   const navLinks = [
     { name: 'Features', href: '/features' },
@@ -51,18 +78,40 @@ export function Navbar() {
               </Link>
             ))}
             <div className="h-4 w-[1px] bg-white/10" />
-            <Link 
-              href="/login" 
-              className="text-sm font-medium text-slate-300 hover:text-white transition-colors flex items-center gap-2"
-            >
-              <LogIn className="w-4 h-4" /> Sign In
-            </Link>
-            <Link 
-              href="/signup" 
-              className="bg-omix-accent hover:bg-omix-accent-dark text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-lg hover:shadow-omix-accent/20"
-            >
-              Sign Up
-            </Link>
+            
+            {loading ? (
+              <div className="h-8 w-20 bg-white/5 animate-pulse rounded-lg" />
+            ) : user ? (
+              <div className="flex items-center gap-6">
+                <Link 
+                  href="/dashboard" 
+                  className="text-sm font-medium text-slate-300 hover:text-white transition-colors flex items-center gap-2"
+                >
+                  <User className="w-4 h-4" /> Dashboard
+                </Link>
+                <button 
+                  onClick={handleLogout}
+                  className="text-sm font-medium text-red-400 hover:text-red-300 transition-colors flex items-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" /> Sign Out
+                </button>
+              </div>
+            ) : (
+              <>
+                <Link 
+                  href="/login" 
+                  className="text-sm font-medium text-slate-300 hover:text-white transition-colors flex items-center gap-2"
+                >
+                  <LogIn className="w-4 h-4" /> Sign In
+                </Link>
+                <Link 
+                  href="/signup" 
+                  className="bg-omix-accent hover:bg-omix-accent-dark text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-lg hover:shadow-omix-accent/20"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Toggle */}
@@ -96,20 +145,43 @@ export function Navbar() {
                 </Link>
               ))}
               <div className="pt-4 flex flex-col gap-4">
-                <Link 
-                  href="/login" 
-                  className="w-full text-center py-3 rounded-xl border border-white/10 text-white font-medium"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Sign In
-                </Link>
-                <Link 
-                  href="/signup" 
-                  className="w-full text-center py-3 rounded-xl bg-omix-accent text-white font-medium"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Sign Up
-                </Link>
+                {user ? (
+                  <>
+                    <Link 
+                      href="/dashboard" 
+                      className="w-full text-center py-3 rounded-xl border border-white/10 text-white font-medium"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
+                    <button 
+                      onClick={() => {
+                        handleLogout()
+                        setIsMobileMenuOpen(false)
+                      }}
+                      className="w-full text-center py-3 rounded-xl bg-red-500/10 text-red-500 font-medium border border-red-500/20"
+                    >
+                      Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link 
+                      href="/login" 
+                      className="w-full text-center py-3 rounded-xl border border-white/10 text-white font-medium"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Sign In
+                    </Link>
+                    <Link 
+                      href="/signup" 
+                      className="w-full text-center py-3 rounded-xl bg-omix-accent text-white font-medium"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Sign Up
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>
@@ -118,3 +190,4 @@ export function Navbar() {
     </nav>
   )
 }
+

@@ -26,7 +26,7 @@ export default async function MemberDashboard() {
   return (
     <div className="min-h-screen bg-omix-navy pt-24 px-4 sm:px-6 lg:px-8 pb-12">
       <div className="max-w-7xl mx-auto">
-        <MemberDashboardContent userEmail={user.email || ''} />
+        <MemberDashboardContent userId={user.id} userEmail={user.email || ''} />
       </div>
     </div>
   )
