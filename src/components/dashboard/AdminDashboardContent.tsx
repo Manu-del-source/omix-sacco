@@ -1,3 +1,5 @@
+'use client'
+
 import { motion, AnimatePresence } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Users, DollarSign, Activity, TrendingUp, Landmark, ArrowUpRight, ListTodo, Zap, Loader2, Check, X, RefreshCw } from 'lucide-react';
