@@ -109,7 +109,7 @@ export function AdminDashboardContent({ userEmail }: { userEmail: string }) {
         const msg = payload.eventType === 'INSERT' 
           ? 'New Loan Application' 
           : `Loan Status Updated to ${newLoan.status}`;
-        setUpdates(prev => [{ id: Date.now(), type: 'loan', msg, time: 'Just now' }, ...prev].slice(0, 5));
+        setUpdates(prev => [{ id: Date.now(), type: 'loan' as const, msg, time: 'Just now' }, ...prev].slice(0, 5));
       })
       // @ts-ignore - Supabase type mismatch in production build
       .on('postgres_changes', { event: 'INSERT', table: 'transactions' }, (payload: any) => {
@@ -117,7 +117,7 @@ export function AdminDashboardContent({ userEmail }: { userEmail: string }) {
         const newTx = payload.new as { amount: number };
         setUpdates(prev => [{ 
           id: Date.now(), 
-          type: 'payment', 
+          type: 'payment' as const, 
           msg: `New Transaction: KES ${Number(newTx.amount).toLocaleString()}`, 
           time: 'Just now' 
         }, ...prev].slice(0, 5));
@@ -225,7 +225,7 @@ export function AdminDashboardContent({ userEmail }: { userEmail: string }) {
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#0D1B2A', border: '1px solid #ffffff10', borderRadius: '12px' }}
                   itemStyle={{ color: '#f97316' }}
-                  formatter={(value: number) => [`KES ${value}K`, 'Total Savings']}
+                  formatter={(value: any) => [`KES ${value}K`, 'Total Savings']}
                 />
                 <Area type="monotone" dataKey="value" stroke="#f97316" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
               </AreaChart>
