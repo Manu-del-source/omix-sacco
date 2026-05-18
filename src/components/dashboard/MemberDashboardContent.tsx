@@ -9,6 +9,11 @@ import { Saving, Loan, Transaction } from '@/types';
 import { DepositModal } from './DepositModal';
 import { LoanApplicationModal } from './LoanApplicationModal';
 
+interface ChartDataPoint {
+  name: string;
+  value: number;
+}
+
 export function MemberDashboardContent({ userId, userEmail }: { userId: string, userEmail: string }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -17,32 +22,29 @@ export function MemberDashboardContent({ userId, userEmail }: { userId: string, 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [isLoanModalOpen, setIsLoanModalOpen] = useState(false);
+  const [now] = useState(new Date()); // Fixed date for render cycle
   const supabase = createClient();
 
-  const fetchData = async (showRefresh = false) => {
-    if (showRefresh) setRefreshing(true);
-    else setLoading(true);
-
-    try {
-      const [savingsRes, loansRes, transactionsRes] = await Promise.all([
-        supabase.from('savings').select('*').eq('member_id', userId).order('created_at', { ascending: true }),
-        supabase.from('loans').select('*').eq('member_id', userId).order('created_at', { ascending: false }),
-        supabase.from('transactions').select('*').eq('member_id', userId).order('created_at', { ascending: false }).limit(5)
-      ]);
-
-      if (savingsRes.data) setSavings(savingsRes.data);
-      if (loansRes.data) setLoans(loansRes.data);
-      if (transactionsRes.data) setTransactions(transactionsRes.data);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
   useEffect(() => {
-    fetchData();
+    const getData = async () => {
+      setLoading(true);
+      try {
+        const [savingsRes, loansRes, transactionsRes] = await Promise.all([
+          supabase.from('savings').select('*').eq('member_id', userId).order('created_at', { ascending: true }),
+          supabase.from('loans').select('*').eq('member_id', userId).order('created_at', { ascending: false }),
+          supabase.from('transactions').select('*').eq('member_id', userId).order('created_at', { ascending: false }).limit(5)
+        ]);
+
+        if (savingsRes.data) setSavings(savingsRes.data);
+        if (loansRes.data) setLoans(loansRes.data);
+        if (transactionsRes.data) setTransactions(transactionsRes.data);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    getData();
   }, [userId, supabase]);
 
   const totalSavings = savings.reduce((acc, curr) => {
@@ -51,7 +53,7 @@ export function MemberDashboardContent({ userId, userEmail }: { userId: string, 
 
   const activeLoan = loans.find(l => l.status === 'APPROVED' || l.status === 'DISBURSED' || l.status === 'PENDING');
 
-  const chartData = savings.reduce((acc: any[], curr) => {
+  const chartData = savings.reduce((acc: ChartDataPoint[], curr) => {
     const month = new Date(curr.created_at).toLocaleString('default', { month: 'short' });
     const amount = Number(curr.amount);
     const existing = acc.find(a => a.name === month);
@@ -64,6 +66,28 @@ export function MemberDashboardContent({ userId, userEmail }: { userId: string, 
     }
     return acc;
   }, []);
+
+  const refreshData = () => {
+    const getData = async () => {
+      setRefreshing(true);
+      try {
+        const [savingsRes, loansRes, transactionsRes] = await Promise.all([
+          supabase.from('savings').select('*').eq('member_id', userId).order('created_at', { ascending: true }),
+          supabase.from('loans').select('*').eq('member_id', userId).order('created_at', { ascending: false }),
+          supabase.from('transactions').select('*').eq('member_id', userId).order('created_at', { ascending: false }).limit(5)
+        ]);
+
+        if (savingsRes.data) setSavings(savingsRes.data);
+        if (loansRes.data) setLoans(loansRes.data);
+        if (transactionsRes.data) setTransactions(transactionsRes.data);
+      } catch (error) {
+        console.error('Error refreshing dashboard data:', error);
+      } finally {
+        setRefreshing(false);
+      }
+    };
+    getData();
+  };
 
   if (loading) {
     return (
@@ -80,7 +104,7 @@ export function MemberDashboardContent({ userId, userEmail }: { userId: string, 
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-display font-bold text-white tracking-tight">Member Portal</h1>
             <button 
-              onClick={() => fetchData(true)} 
+              onClick={refreshData} 
               className={`p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all ${refreshing ? 'animate-spin' : ''}`}
             >
               <RefreshCw className="w-4 h-4 text-slate-400" />
@@ -111,7 +135,7 @@ export function MemberDashboardContent({ userId, userEmail }: { userId: string, 
           { label: 'Total Savings', value: `KES ${totalSavings.toLocaleString()}`, icon: Landmark, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
           { label: 'Active Loan', value: activeLoan ? `KES ${Number(activeLoan.amount).toLocaleString()}` : 'None', icon: FileText, color: 'text-omix-accent', bg: 'bg-omix-accent/10' },
           { label: 'Loan Status', value: activeLoan ? activeLoan.status : 'N/A', icon: ShieldCheck, color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
-          { label: 'Member Since', value: new Date(savings[0]?.created_at || Date.now()).toLocaleDateString(), icon: ArrowRightLeft, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
+          { label: 'Member Since', value: new Date(savings[0]?.created_at || now).toLocaleDateString(), icon: ArrowRightLeft, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
         ].map((stat, i) => (
           <motion.div
             key={i}
@@ -228,14 +252,14 @@ export function MemberDashboardContent({ userId, userEmail }: { userId: string, 
         isOpen={isDepositModalOpen} 
         onClose={() => setIsDepositModalOpen(false)} 
         userId={userId} 
-        onSuccess={() => fetchData(true)} 
+        onSuccess={refreshData} 
       />
 
       <LoanApplicationModal 
         isOpen={isLoanModalOpen} 
         onClose={() => setIsLoanModalOpen(false)} 
         userId={userId} 
-        onSuccess={() => fetchData(true)} 
+        onSuccess={refreshData} 
       />
     </div>
   )

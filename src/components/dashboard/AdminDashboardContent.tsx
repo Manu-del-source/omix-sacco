@@ -2,12 +2,24 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Users, DollarSign, Activity, TrendingUp, Landmark, ArrowUpRight, ListTodo, Zap, Loader2, Check, X, RefreshCw } from 'lucide-react';
+import { Users, DollarSign, Activity, TrendingUp, Landmark, ListTodo, Zap, Loader2, Check, X, RefreshCw } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { Loan, Profile } from '@/types';
 
 type LoanWithMember = Loan & { profiles: Profile };
+
+interface ChartDataPoint {
+  name: string;
+  value: number;
+}
+
+interface ActivityUpdate {
+  id: number;
+  type: 'loan' | 'payment';
+  msg: string;
+  time: string;
+}
 
 export function AdminDashboardContent({ userEmail }: { userEmail: string }) {
   const [loading, setLoading] = useState(true);
@@ -19,8 +31,8 @@ export function AdminDashboardContent({ userEmail }: { userEmail: string }) {
     pendingApprovals: 0
   });
   const [loans, setLoans] = useState<LoanWithMember[]>([]);
-  const [updates, setUpdates] = useState<any[]>([]);
-  const [chartData, setChartData] = useState<any[]>([]);
+  const [updates, setUpdates] = useState<ActivityUpdate[]>([]);
+  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const supabase = createClient();
 
   const fetchData = async (showRefresh = false) => {
@@ -29,9 +41,8 @@ export function AdminDashboardContent({ userEmail }: { userEmail: string }) {
 
     try {
       // 1. Fetch Stats
-      const [savingsRes, loansCountRes, membersRes, pendingRes, activeLoansRes] = await Promise.all([
-        supabase.from('savings').select('amount, transaction_type'),
-        supabase.from('loans').select('id', { count: 'exact', head: true }),
+      const [savingsRes, membersRes, pendingRes, activeLoansRes] = await Promise.all([
+        supabase.from('savings').select('amount, transaction_type, created_at'),
         supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'member'),
         supabase.from('loans').select('id', { count: 'exact', head: true }).eq('status', 'PENDING'),
         supabase.from('loans').select('amount').eq('status', 'DISBURSED')
@@ -57,10 +68,10 @@ export function AdminDashboardContent({ userEmail }: { userEmail: string }) {
         .order('created_at', { ascending: false })
         .limit(5);
       
-      if (recentLoans) setLoans(recentLoans as any);
+      if (recentLoans) setLoans(recentLoans as unknown as LoanWithMember[]);
 
       // 3. Prepare Chart Data
-      const chartData = (savingsRes.data || []).reduce((acc: any[], curr) => {
+      const preparedChartData = (savingsRes.data || []).reduce((acc: ChartDataPoint[], curr) => {
         const month = new Date(curr.created_at).toLocaleString('default', { month: 'short' });
         const amount = Number(curr.amount);
         const existing = acc.find(a => a.name === month);
@@ -73,7 +84,7 @@ export function AdminDashboardContent({ userEmail }: { userEmail: string }) {
         }
         return acc;
       }, []);
-      setChartData(chartData);
+      setChartData(preparedChartData);
 
     } catch (error) {
       console.error('Error fetching admin data:', error);
@@ -84,24 +95,29 @@ export function AdminDashboardContent({ userEmail }: { userEmail: string }) {
   };
 
   useEffect(() => {
-    fetchData();
+    const getData = async () => {
+      await fetchData();
+    };
+    getData();
 
     // Subscribe to real-time updates
     const channel = supabase
       .channel('admin-dashboard')
       .on('postgres_changes', { event: '*', table: 'loans' }, (payload) => {
         fetchData(true);
+        const newLoan = payload.new as Loan;
         const msg = payload.eventType === 'INSERT' 
           ? 'New Loan Application' 
-          : `Loan Status Updated to ${payload.new.status}`;
+          : `Loan Status Updated to ${newLoan.status}`;
         setUpdates(prev => [{ id: Date.now(), type: 'loan', msg, time: 'Just now' }, ...prev].slice(0, 5));
       })
       .on('postgres_changes', { event: 'INSERT', table: 'transactions' }, (payload) => {
         fetchData(true);
+        const newTx = payload.new as { amount: number };
         setUpdates(prev => [{ 
           id: Date.now(), 
           type: 'payment', 
-          msg: `New Transaction: KES ${Number(payload.new.amount).toLocaleString()}`, 
+          msg: `New Transaction: KES ${Number(newTx.amount).toLocaleString()}`, 
           time: 'Just now' 
         }, ...prev].slice(0, 5));
       })
@@ -110,6 +126,7 @@ export function AdminDashboardContent({ userEmail }: { userEmail: string }) {
     return () => {
       supabase.removeChannel(channel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase]);
 
   const handleLoanAction = async (loanId: string, action: 'APPROVED' | 'REJECTED') => {
