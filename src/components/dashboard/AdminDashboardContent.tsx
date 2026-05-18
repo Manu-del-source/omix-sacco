@@ -102,31 +102,38 @@ export function AdminDashboardContent({ userEmail }: { userEmail: string }) {
     getData();
 
     // Subscribe to real-time updates
-    const channel = (supabase.channel('admin-dashboard') as any)
-      // @ts-ignore - Supabase type mismatch in production build
-      .on('postgres_changes', { event: '*', table: 'loans' }, (payload: any) => {
-        fetchData(true);
-        const newLoan = payload.new as Loan;
-        const msg = payload.eventType === 'INSERT' 
-          ? 'New Loan Application' 
-          : `Loan Status Updated to ${newLoan.status}`;
-        setUpdates(prev => [{ id: Date.now(), type: 'loan' as const, msg, time: 'Just now' }, ...prev].slice(0, 5));
-      })
-      // @ts-ignore - Supabase type mismatch in production build
-      .on('postgres_changes', { event: 'INSERT', table: 'transactions' }, (payload: any) => {
-        fetchData(true);
-        const newTx = payload.new as { amount: number };
-        setUpdates(prev => [{ 
-          id: Date.now(), 
-          type: 'payment' as const, 
-          msg: `New Transaction: KES ${Number(newTx.amount).toLocaleString()}`, 
-          time: 'Just now' 
-        }, ...prev].slice(0, 5));
-      })
-      .subscribe();
+    const channel = supabase.channel('admin-dashboard')
+    
+    // Using an extremely defensive type bypass for Vercel's strict build environment
+    const subscribeToChanges = (chan: any) => {
+      if (typeof chan?.on === 'function') {
+        chan.on('postgres_changes', { event: '*', table: 'loans' }, (payload: any) => {
+          fetchData(true);
+          const newLoan = payload.new as Loan;
+          const msg = payload.eventType === 'INSERT' 
+            ? 'New Loan Application' 
+            : `Loan Status Updated to ${newLoan.status}`;
+          setUpdates(prev => [{ id: Date.now(), type: 'loan' as const, msg, time: 'Just now' }, ...prev].slice(0, 5));
+        });
+
+        chan.on('postgres_changes', { event: 'INSERT', table: 'transactions' }, (payload: any) => {
+          fetchData(true);
+          const newTx = payload.new as { amount: number };
+          setUpdates(prev => [{ 
+            id: Date.now(), 
+            type: 'payment' as const, 
+            msg: `New Transaction: KES ${Number(newTx.amount).toLocaleString()}`, 
+            time: 'Just now' 
+          }, ...prev].slice(0, 5));
+        });
+      }
+      return chan.subscribe();
+    };
+
+    const subscription = subscribeToChanges(channel);
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(subscription);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase]);
