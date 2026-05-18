@@ -103,7 +103,7 @@ export function AdminDashboardContent({ userEmail }: { userEmail: string }) {
     // Subscribe to real-time updates
     const channel = supabase
       .channel('admin-dashboard')
-      .on('postgres_changes', { event: '*', table: 'loans' }, (payload) => {
+      .on('postgres_changes' as any, { event: '*', table: 'loans' }, (payload: any) => {
         fetchData(true);
         const newLoan = payload.new as Loan;
         const msg = payload.eventType === 'INSERT' 
@@ -111,7 +111,7 @@ export function AdminDashboardContent({ userEmail }: { userEmail: string }) {
           : `Loan Status Updated to ${newLoan.status}`;
         setUpdates(prev => [{ id: Date.now(), type: 'loan', msg, time: 'Just now' }, ...prev].slice(0, 5));
       })
-      .on('postgres_changes', { event: 'INSERT', table: 'transactions' }, (payload) => {
+      .on('postgres_changes' as any, { event: 'INSERT', table: 'transactions' }, (payload: any) => {
         fetchData(true);
         const newTx = payload.new as { amount: number };
         setUpdates(prev => [{ 
