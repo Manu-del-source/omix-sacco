@@ -6,7 +6,7 @@ export default function SignUpPage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 shadow-lg shadow-indigo-500/20">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-omix-accent shadow-lg shadow-omix-accent/20">
             <svg
               className="h-8 w-8 text-white"
               fill="none"
